@@ -1,0 +1,27 @@
+# Environment variables
+.env
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Raw and processed data
+data/raw/*
+data/processed/*
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Power BI temporary files
+*.tmp
+~$*
+
+# Operating system
+.DS_Store
+Thumbs.db
