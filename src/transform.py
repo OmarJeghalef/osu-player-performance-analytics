@@ -155,12 +155,24 @@ def build_player_best_scores(raw_payload: dict[str, Any]) -> pd.DataFrame:
         weight = score.get("weight") or {}
         statistics = score.get("statistics") or {}
 
-        mods = score.get("mods") or []
-        mod_acronyms = [
-            mod.get("acronym")
-            for mod in mods
-            if isinstance(mod, dict) and mod.get("acronym")
-        ]
+        raw_mods = score.get("mods") or []
+
+        if all(isinstance(mod, dict) for mod in raw_mods):
+            mod_acronyms = [
+                mod.get("acronym")
+                for mod in raw_mods
+                if mod.get("acronym")
+            ]
+        else:
+            mod_acronyms = [str(mod) for mod in raw_mods]
+
+        beatmap_id = score.get("beatmap_id") or beatmap.get("id")
+        beatmapset_id = beatmap.get("beatmapset_id") or beatmapset.get("id")
+
+        user_id = score.get("user_id")
+        if user_id is None:
+            user = score.get("user") or {}
+            user_id = user.get("id")
 
         row = {
             "extracted_at_utc": metadata.get("extracted_at_utc"),
@@ -170,9 +182,9 @@ def build_player_best_scores(raw_payload: dict[str, Any]) -> pd.DataFrame:
 
             "top_play_rank": score_index,
             "score_id": score.get("id"),
-            "user_id": score.get("user_id"),
-            "beatmap_id": score.get("beatmap_id"),
-            "beatmapset_id": beatmapset.get("id"),
+            "user_id": user_id,
+            "beatmap_id": beatmap_id,
+            "beatmapset_id": beatmapset_id,
 
             "score": score.get("score"),
             "pp": score.get("pp"),
@@ -184,12 +196,12 @@ def build_player_best_scores(raw_payload: dict[str, Any]) -> pd.DataFrame:
             "created_at": score.get("created_at"),
 
             "mods": ",".join(mod_acronyms),
-            "ruleset_id": score.get("ruleset_id"),
+            "ruleset_id": score.get("mode_int") if score.get("mode_int") is not None else beatmap.get("mode_int"),
 
-            "count_300": statistics.get("great"),
-            "count_100": statistics.get("ok"),
-            "count_50": statistics.get("meh"),
-            "count_miss": statistics.get("miss"),
+            "count_300": statistics.get("count_300"),
+            "count_100": statistics.get("count_100"),
+            "count_50": statistics.get("count_50"),
+            "count_miss": statistics.get("count_miss"),
 
             "weight_percentage": weight.get("percentage"),
             "weight_pp": weight.get("pp"),
