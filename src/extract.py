@@ -10,19 +10,19 @@ import requests
 
 from config import Settings
 
-# Constants
+# Constants for osu! API endpoints and request settings
 TOKEN_URL = "https://osu.ppy.sh/oauth/token"
 API_BASE_URL = "https://osu.ppy.sh/api/v2"
 REQUEST_TIMEOUT_SECONDS = 30
 
-# Path to data directory for saving raw JSON files
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
+
 
 class OsuApiError(RuntimeError):
     """Raised when an osu! API request fails."""
 
-# Request an OAuth access token using the Client Credentials Grant.
+# Get an OAuth access token using the Client Credentials Grant, which allows access to public osu! API data.
 def get_access_token(settings: Settings) -> str:
     """
     Request an OAuth access token using the Client Credentials Grant.
@@ -56,6 +56,35 @@ def get_access_token(settings: Settings) -> str:
 
     return access_token
 
+# Send an authorized GET request to the osu! API.
+def make_authorized_get_request(
+    access_token: str,
+    url: str,
+    params: dict[str, Any] | None = None,
+) -> Any:
+    """Send one authorized GET request to the osu! API and return the JSON response."""
+
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {access_token}",
+    }
+
+    try:
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as error:
+        status_code = error.response.status_code if error.response else "unknown"
+        raise OsuApiError(f"osu! API returned HTTP {status_code} for {url}") from error
+    except requests.RequestException as error:
+        raise OsuApiError(f"Failed to connect to the osu! API: {error}") from error
+
+    return response.json()
+
 # Retrieve one osu! player's public profile and statistics.
 def get_user(
     access_token: str,
@@ -67,35 +96,48 @@ def get_user(
     encoded_username = quote(f"@{username}", safe="")
     url = f"{API_BASE_URL}/users/{encoded_username}/{mode}"
 
-    headers = {
-        "Accept": "application/json",
-        "Authorization": f"Bearer {access_token}",
+    user = make_authorized_get_request(access_token=access_token, url=url)
+
+    if not isinstance(user, dict):
+        raise OsuApiError("Expected user profile response to be a JSON object.")
+
+    return user
+
+# Retrieve a player's best scores from the osu! API.
+def get_user_best_scores(
+    access_token: str,
+    user_id: int,
+    mode: str = "osu",
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    """
+    Retrieve a player's best scores.
+
+    The osu! API supports score types such as best, firsts, and recent.
+    For this analytics project, best scores are the most useful starting point.
+    """
+
+    if limit < 1 or limit > 100:
+        raise ValueError("Best score limit must be between 1 and 100.")
+
+    url = f"{API_BASE_URL}/users/{user_id}/scores/best"
+    params = {
+        "mode": mode,
+        "limit": limit,
     }
 
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as error:
-        status_code = error.response.status_code if error.response else "unknown"
+    scores = make_authorized_get_request(
+        access_token=access_token,
+        url=url,
+        params=params,
+    )
 
-        if status_code == 404:
-            raise OsuApiError(
-                f"osu! user {username!r} was not found in mode {mode!r}."
-            ) from error
+    if not isinstance(scores, list):
+        raise OsuApiError("Expected best scores response to be a JSON array.")
 
-        raise OsuApiError(
-            f"osu! API returned HTTP {status_code} while retrieving the user."
-        ) from error
-    except requests.RequestException as error:
-        raise OsuApiError(f"Failed to connect to the osu! API: {error}") from error
+    return scores
 
-    return response.json()
-
-# Create a constant filename
+#  Build a consistent raw data filename based on dataset name, username, mode, and timestamp.
 def build_raw_filename(
     dataset_name: str,
     username: str,
@@ -109,9 +151,9 @@ def build_raw_filename(
 
     return f"{dataset_name}_{safe_username}_{mode}_{formatted_timestamp}.json"
 
-# Save raw API data as a timestamped JSON file
+# Save raw API data as a timestamped JSON file.
 def save_raw_json(
-    data: dict[str, Any],
+    data: Any,
     dataset_name: str,
     username: str,
     mode: str,
@@ -146,7 +188,7 @@ def save_raw_json(
 
     return output_path
 
-# Print a small validation summary without exposing credentials.
+# Print a small validation summary of the retrieved user profile without exposing credentials.
 def print_user_summary(user: dict[str, Any]) -> None:
     """Print a small validation summary without exposing credentials."""
 
@@ -163,9 +205,32 @@ def print_user_summary(user: dict[str, Any]) -> None:
     print(f"Accuracy: {statistics.get('hit_accuracy')}")
     print(f"Play count: {statistics.get('play_count')}")
 
+# Print a small summary of the retrieved best scores without exposing credentials.
+def print_best_scores_summary(scores: list[dict[str, Any]]) -> None:
+    """Print a small summary of extracted best scores."""
+
+    print()
+    print(f"Best scores retrieved: {len(scores)}")
+
+    if not scores:
+        print("No best scores returned.")
+        return
+
+    top_score = scores[0]
+    beatmap = top_score.get("beatmap") or {}
+    beatmapset = top_score.get("beatmapset") or {}
+
+    print("Top score preview:")
+    print(f"Score ID: {top_score.get('id')}")
+    print(f"PP: {top_score.get('pp')}")
+    print(f"Accuracy: {top_score.get('accuracy')}")
+    print(f"Rank: {top_score.get('rank')}")
+    print(f"Beatmapset: {beatmapset.get('artist')} - {beatmapset.get('title')}")
+    print(f"Difficulty: {beatmap.get('version')}")
+
 # Main function to orchestrate the extraction process
 def main() -> None:
-    """Load settings, retrieve the configured player, and save raw JSON."""
+    """Load settings, retrieve player data, and save raw JSON files."""
 
     try:
         settings = Settings.from_environment()
@@ -177,15 +242,37 @@ def main() -> None:
             mode=settings.osu_mode,
         )
 
-        output_path = save_raw_json(
+        user_id = user.get("id")
+
+        if not isinstance(user_id, int):
+            raise OsuApiError("User profile response did not contain a valid integer id.")
+
+        best_scores = get_user_best_scores(
+            access_token=access_token,
+            user_id=user_id,
+            mode=settings.osu_mode,
+            limit=100,
+        )
+
+        profile_output_path = save_raw_json(
             data=user,
             dataset_name="user_profile",
             username=settings.osu_username,
             mode=settings.osu_mode,
         )
 
+        best_scores_output_path = save_raw_json(
+            data=best_scores,
+            dataset_name="user_best_scores",
+            username=settings.osu_username,
+            mode=settings.osu_mode,
+        )
+
         print_user_summary(user)
-        print(f"Raw JSON saved to: {output_path}")
+        print_best_scores_summary(best_scores)
+        print()
+        print(f"Raw profile JSON saved to: {profile_output_path}")
+        print(f"Raw best scores JSON saved to: {best_scores_output_path}")
 
     except (ValueError, OsuApiError) as error:
         raise SystemExit(f"Error: {error}") from error
