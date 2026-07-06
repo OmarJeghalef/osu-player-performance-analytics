@@ -70,6 +70,7 @@ The project currently implements an end-to-end local analytics pipeline:
 4. Validates processed datasets for required files, columns, non-null fields, unique score IDs, numeric ranges, and parseable timestamps.
 5. Loads validated datasets into PostgreSQL tables.
 6. Provides SQL analysis queries for player performance trends, including accuracy, pp, beatmap difficulty, mod combinations, and score timing.
+7. Creates dashboard-ready PostgreSQL views for Power BI reporting.
 
 ## SQL Analysis
 
@@ -90,3 +91,17 @@ Current analysis areas include:
 - Joins between profile snapshots and best scores
 
 Note: Date-based score analysis currently reflects when the player's current top 100 best scores were achieved, not the player's complete historical score timeline.
+
+## SQL Reporting Views
+
+The `sql/views.sql` file creates dashboard-ready PostgreSQL views for Power BI.
+
+Current views include:
+
+- `vw_best_scores_dashboard`: score-level view with cleaned fields such as accuracy percentage, cleaned mods, pp per star, beatmap name, score month, and score year.
+- `vw_profile_snapshot_latest`: latest player profile snapshot for dashboard card visuals.
+- `vw_monthly_score_summary`: monthly summary of the player's current top 100 plays.
+- `vw_mod_summary`: performance summary by mod combination.
+- `vw_star_rating_summary`: performance summary by beatmap star rating bucket.
+
+These views provide a reporting layer between the PostgreSQL tables and Power BI so dashboard logic can stay consistent and reusable.
