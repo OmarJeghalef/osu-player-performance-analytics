@@ -53,6 +53,7 @@ src/
 └── load.py
 
 sql/
+├── views.sql
 ├── schema.sql
 └── analysis_queries.sql
 
