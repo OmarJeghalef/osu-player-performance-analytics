@@ -1,25 +1,35 @@
 # osu! Player Performance Analytics
 
-An end-to-end data analytics project that collects and analyzes osu! player performance data using Python, PostgreSQL, SQL, and Power BI.
+An end-to-end data analytics portfolio project that collects, processes, validates, stores, analyzes, and visualizes osu! player performance data using Python, pandas, PostgreSQL, SQL, and Power BI.
+
+The current version analyzes the osu! standard player `mrekk` using public data from the osu! API v2.
 
 ## Project Goal
 
 The goal of this project is to build a repeatable analytics pipeline that:
 
-1. Extracts player, score, and beatmap data from the osu! API.
-2. Cleans and transforms the data with Python and pandas.
-3. Loads validated data into PostgreSQL.
-4. Analyzes performance using SQL.
-5. Presents findings through an interactive Power BI dashboard.
+1. Extracts player profile and best-score data from the osu! API.
+2. Saves raw API responses as timestamped JSON files.
+3. Cleans and transforms nested API data with Python and pandas.
+4. Validates processed datasets before database loading.
+5. Loads validated data into PostgreSQL.
+6. Analyzes player performance using SQL.
+7. Prepares dashboard-ready SQL views for Power BI.
+8. Builds an interactive Power BI dashboard.
 
-## Questions
+## Analysis Questions
+
+This project is focused on answering questions such as:
 
 - How does accuracy relate to pp in a player's top scores?
 - How does beatmap star rating relate to pp?
 - Do higher-star plays still produce more pp when accuracy is lower?
 - Which mod combinations appear most often in the player's top scores?
+- Which mod combinations are associated with higher average pp or accuracy?
 - When were the player's current top scores achieved?
 - What difficulty ranges appear most represented in the player's best scores?
+
+Note: Date-based score analysis currently reflects when the player's current top 100 best scores were achieved, not the player's complete historical score timeline.
 
 ## Technology Stack
 
@@ -27,16 +37,22 @@ Currently implemented:
 
 - Python
 - pandas
+- requests
+- python-dotenv
 - osu! API v2
 - PostgreSQL
 - SQL
+- SQLAlchemy
+- psycopg
+- Power BI Desktop
 - Git and GitHub
 
-Planned:
+Planned or in progress:
 
-- Power BI
 - Power Query
-- DAX
+- DAX measures
+- Final Power BI dashboard design
+- Dashboard screenshots for the README
 
 ## Project Structure
 
@@ -58,51 +74,11 @@ sql/
 └── analysis_queries.sql
 
 dashboard/
+├── osu_performance_dashboard_draft.pbix
 └── screenshots/
+
+README.md
+requirements.txt
+.env.example
+.gitignore
 ```
-
-## Current Pipeline Status
-
-The project currently implements an end-to-end local analytics pipeline:
-
-1. Extracts public osu! player data from the osu! API v2.
-2. Saves raw API responses as timestamped JSON files with metadata.
-3. Transforms nested JSON into clean player profile and best-score CSV datasets using pandas.
-4. Validates processed datasets for required files, columns, non-null fields, unique score IDs, numeric ranges, and parseable timestamps.
-5. Loads validated datasets into PostgreSQL tables.
-6. Provides SQL analysis queries for player performance trends, including accuracy, pp, beatmap difficulty, mod combinations, and score timing.
-7. Creates dashboard-ready PostgreSQL views for Power BI reporting.
-
-## SQL Analysis
-
-The `sql/analysis_queries.sql` file contains exploratory SQL queries for analyzing the player's current top 100 best scores.
-
-Current analysis areas include:
-
-- Accuracy versus pp
-- Beatmap star rating versus pp
-- Accuracy versus beatmap difficulty
-- Average pp by accuracy bucket
-- Average pp by star rating bucket
-- High-difficulty lower-accuracy plays versus lower-difficulty high-accuracy plays
-- Current top plays by year and month achieved
-- Cumulative current top plays over time
-- Mod combination performance
-- Rank grade distribution
-- Joins between profile snapshots and best scores
-
-Note: Date-based score analysis currently reflects when the player's current top 100 best scores were achieved, not the player's complete historical score timeline.
-
-## SQL Reporting Views
-
-The `sql/views.sql` file creates dashboard-ready PostgreSQL views for Power BI.
-
-Current views include:
-
-- `vw_best_scores_dashboard`: score-level view with cleaned fields such as accuracy percentage, cleaned mods, pp per star, beatmap name, score month, and score year.
-- `vw_profile_snapshot_latest`: latest player profile snapshot for dashboard card visuals.
-- `vw_monthly_score_summary`: monthly summary of the player's current top 100 plays.
-- `vw_mod_summary`: performance summary by mod combination.
-- `vw_star_rating_summary`: performance summary by beatmap star rating bucket.
-
-These views provide a reporting layer between the PostgreSQL tables and Power BI so dashboard logic can stay consistent and reusable.
