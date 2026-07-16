@@ -45,14 +45,14 @@ Currently implemented:
 - SQLAlchemy
 - psycopg
 - Power BI Desktop
+- DAX measures
 - Git and GitHub
 
 Planned or in progress:
 
-- Power Query
-- DAX measures
-- Final Power BI dashboard design
-- Dashboard screenshots for the README
+- Power Query refinements
+- Final dashboard polish
+- Additional dashboard screenshots or exports
 
 ## Project Structure
 
@@ -69,16 +69,19 @@ src/
 └── load.py
 
 sql/
-├── views.sql
 ├── schema.sql
-└── analysis_queries.sql
+├── analysis_queries.sql
+└── views.sql
 
 dashboard/
-├── osu_performance_dashboard_draft.pbix
+├── osu_performance_dashboard.pbix
 └── screenshots/
+    └── osu_performance_dashboard_overview.pdf
 
 README.md
 requirements.txt
 .env.example
 .gitignore
 ```
+
+[View dashboard PDF](dashboard/screenshots/osu_performance_dashboard_overview.pdf)
