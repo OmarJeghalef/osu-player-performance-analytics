@@ -51,8 +51,9 @@ Currently implemented:
 Planned or in progress:
 
 - Power Query refinements
-- Final dashboard polish
-- Additional dashboard screenshots or exports
+- Additional dashboard polish
+- Optional second dashboard page or top plays detail table
+- Resume and portfolio documentation updates
 
 ## Project Structure
 
@@ -77,7 +78,7 @@ dashboard/
 ├── osu_performance_dashboard.pbix
 └── screenshots/
     ├── dashboard_overview.png
-    └── osu_performance_dashboard_overview.pdf
+    └── dashboard_overview.pdf
 
 README.md
 requirements.txt
