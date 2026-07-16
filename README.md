@@ -76,6 +76,7 @@ sql/
 dashboard/
 ├── osu_performance_dashboard.pbix
 └── screenshots/
+    ├── dashboard_overview.png
     └── osu_performance_dashboard_overview.pdf
 
 README.md
@@ -84,4 +85,6 @@ requirements.txt
 .gitignore
 ```
 
-[View dashboard PDF](dashboard/screenshots/osu_performance_dashboard_overview.pdf)
+![Dashboard Overview](dashboard/screenshots/dashboard_overview.png)
+
+[View dashboard PDF](dashboard/screenshots/dashboard_overview.pdf)
