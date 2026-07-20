@@ -301,28 +301,3 @@ On Windows, if using the `postgres` user, the PostgreSQL commands may look like:
 psql -U postgres -d osu_analytics -f sql\schema.sql
 psql -U postgres -d osu_analytics -f sql\views.sql
 ```
-
-## Project Status
-
-This project is complete as a portfolio-ready version 1.
-
-Completed deliverables:
-
-- osu! API extraction scripts
-- Raw JSON snapshot storage
-- pandas transformation scripts
-- Data validation script
-- PostgreSQL schema
-- PostgreSQL load script
-- SQL analysis queries
-- SQL reporting views
-- Power BI dashboard
-- Dashboard screenshot and PDF export
-- GitHub README documentation
-
-Potential future improvements:
-
-- Add support for comparing multiple players.
-- Add a second dashboard page with top-play detail tables.
-- Add historical score tracking by storing repeated API snapshots over time.
-- Add Power Query transformations if Power BI-side data shaping becomes necessary.
